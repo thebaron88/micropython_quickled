@@ -183,6 +183,7 @@ def do_animation(pixel_pin):
         delta = utime.ticks_diff(utime.ticks_us(), t)
         print('Function {} Time = {:6.3f}ms'.format("Fill", delta / 1000))
 
+
 def do_christmass(pixel_pin):
     num = 0
     pixel_off = memoryview(pixel_buff)
@@ -195,11 +196,44 @@ def do_christmass(pixel_pin):
 
 
 import random
+def shuffle(seq):
+    l = len(seq)
+    for i in range(l):
+        j = random.randrange(l)
+        seq[i], seq[j] = seq[j], seq[i]
+
+
 def do_christmas_rand(pixel_pin):
-    lights = bytearray(range(MAX_LEDS))
+    hue = bytearray([0]*MAX_LEDS)
+    sat = bytearray([255]*MAX_LEDS)
+    val = bytearray([64]*MAX_LEDS)
+    pix_list = list(range(0, MAX_LEDS))
+    col_list = [x % 256 for x in list(range(0, MAX_LEDS))]
     while True:
-        lights[random.randint(0, MAX_LEDS-1)] = random.randint(0, 255)
-        quickled.write_hue(pixel_pin, lights)
+        shuffle(pix_list)
+        shuffle(col_list)
+        for i in pix_list:
+            hue[i] = col_list[i]
+            quickled.write_hsv(pixel_pin, hue, sat, val)
+
+
+def do_christmas_skip(pixel_pin):
+    hue = bytearray([0]*MAX_LEDS)
+    sat = bytearray([255]*MAX_LEDS)
+    val = bytearray([64]*MAX_LEDS)
+    while True:
+        skip = random.randint(2, 5)
+        color = random.randint(0, 255)
+        for i in range(0, MAX_LEDS):
+            if i % skip == 0:
+                hue[i] = color
+            quickled.write_hsv(pixel_pin, hue, sat, val)
+        skip = random.randint(2, 5)
+        color = random.randint(0, 255)
+        for i in range(MAX_LEDS-1, -1, -1):
+            if i % skip == 0:
+                hue[i] = color
+            quickled.write_hsv(pixel_pin, hue, sat, val)
 
 
 def do_christmas_hue(pixel_pin):
@@ -213,6 +247,7 @@ def do_christmas_hue(pixel_pin):
             print('Function {} Time = {:6.3f}ms for 100'.format("Fill", delta / 1000))
             t = utime.ticks_us()
 
+
 def do_connect():
     import network
     wlan = network.WLAN(network.STA_IF)
@@ -224,18 +259,15 @@ def do_connect():
             pass
     print('network config:', wlan.ifconfig())
 
+
 if __name__ == "__main__":
     machine.freq(240000000)
-    #import webrepl
-    #webrepl.start()
-    #do_connect()
     pin = Pin(2, Pin.OUT)
     pin.on()
-
     pixel_pin = Pin(13, Pin.OUT)
     #r = esp32.RMT(0, pin=pixel_pin, clock_div=4)
-    do_christmas_rand(pixel_pin)
-    #       quickled.write(pixel_pin, bytearray([255, 255, 255]))
+    do_christmas_skip(pixel_pin)
+    #quickled.write_hsv(pixel_pin, bytearray(range(0, 255, 30)), bytearray([255]*9), bytearray([128]*9))
     pin.off()
 
     #

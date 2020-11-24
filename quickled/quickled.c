@@ -188,18 +188,25 @@ STATIC mp_obj_t quickled_write(mp_obj_t pin, mp_obj_t buf) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(quickled_write_obj, quickled_write);
 
 
-STATIC mp_obj_t quickled_write_hue(mp_obj_t pin, mp_obj_t buf) {
-    mp_buffer_info_t bufinfo;
-    mp_get_buffer_raise(buf, &bufinfo, MP_BUFFER_READ);
+STATIC mp_obj_t quickled_write_hsv(size_t n_args, const mp_obj_t *args) {
+    mp_buffer_info_t buf_hue_info;
+    mp_buffer_info_t buf_sat_info;
+    mp_buffer_info_t buf_val_info;
+    mp_get_buffer_raise(args[1], &buf_hue_info, MP_BUFFER_READ);
+    mp_get_buffer_raise(args[2], &buf_sat_info, MP_BUFFER_READ);
+    mp_get_buffer_raise(args[3], &buf_val_info, MP_BUFFER_READ);
 
-    if (bufinfo.len == 0) {
+    if (buf_hue_info.len == 0) {
+        return mp_const_none;
+    }
+    if (buf_hue_info.len != buf_sat_info.len || buf_hue_info.len != buf_val_info.len) {
         return mp_const_none;
     }
 
     rmt_config_t config;
     config.rmt_mode = RMT_MODE_TX;
     config.channel = (rmt_channel_t)0;
-    config.gpio_num = mp_hal_get_pin_obj(pin);
+    config.gpio_num = mp_hal_get_pin_obj(args[0]);
     config.mem_block_num = 1;
     config.tx_config.loop_en = 0;
 
@@ -215,15 +222,17 @@ STATIC mp_obj_t quickled_write_hue(mp_obj_t pin, mp_obj_t buf) {
     check_esp_err(rmt_config(&config));
     check_esp_err(rmt_driver_install(config.channel, 0, 0));
 
-    int num_items = bufinfo.len * 8 * 3;
-    uint8_t *buff_ptr = (uint8_t *)bufinfo.buf;
+    int num_items = buf_hue_info.len * 8 * 3;  // One for each bit, and one for each color
+    uint8_t *buf_hue_ptr = (uint8_t *)buf_hue_info.buf;
+    uint8_t *buf_sat_ptr = (uint8_t *)buf_sat_info.buf;
+    uint8_t *buf_val_ptr = (uint8_t *)buf_val_info.buf;
     uint8_t mask = 0x80;
 
     struct CRGB out_color;
     struct CHSV in_hue;
-    in_hue.h = *buff_ptr++;
-    in_hue.s = 255;
-    in_hue.v = 128;
+    in_hue.h = *buf_hue_ptr++;
+    in_hue.s = *buf_sat_ptr++;
+    in_hue.v = *buf_val_ptr++;
 
     hsv2rgb_rainbow_mark(&in_hue, &out_color);
     uint8_t val = *((uint8_t *)&out_color);
@@ -246,7 +255,9 @@ STATIC mp_obj_t quickled_write_hue(mp_obj_t pin, mp_obj_t buf) {
         if (!(mask >>= 1)) {
             if (++color == 3) {
                 color = 0;
-                in_hue.h = *buff_ptr++;
+                in_hue.h = *buf_hue_ptr++;
+                in_hue.s = *buf_sat_ptr++;
+                in_hue.v = *buf_val_ptr++;
                 hsv2rgb_rainbow_mark(&in_hue, &out_color);
             }
             val = *(((uint8_t *)&out_color)+color);
@@ -261,12 +272,12 @@ STATIC mp_obj_t quickled_write_hue(mp_obj_t pin, mp_obj_t buf) {
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(quickled_write_hue_obj, quickled_write_hue);
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(quickled_write_hsv_obj, 4, 4, quickled_write_hsv);
 
 STATIC const mp_rom_map_elem_t quickled_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_quickled) },
     { MP_ROM_QSTR(MP_QSTR_write), MP_ROM_PTR(&quickled_write_obj) },
-    { MP_ROM_QSTR(MP_QSTR_write_hue), MP_ROM_PTR(&quickled_write_hue_obj) },
+    { MP_ROM_QSTR(MP_QSTR_write_hsv), MP_ROM_PTR(&quickled_write_hsv_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(quickled_module_globals, quickled_module_globals_table);
 
