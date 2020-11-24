@@ -207,7 +207,7 @@ STATIC mp_obj_t quickled_write_hsv(size_t n_args, const mp_obj_t *args) {
     config.rmt_mode = RMT_MODE_TX;
     config.channel = (rmt_channel_t)0;
     config.gpio_num = mp_hal_get_pin_obj(args[0]);
-    config.mem_block_num = 1;
+    config.mem_block_num = 8;
     config.tx_config.loop_en = 0;
 
     config.tx_config.carrier_en = 0;

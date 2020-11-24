@@ -47,9 +47,9 @@ source /mnt/c/Users/Mark/esp/build-venv/bin/activate
 source /mnt/c/Users/Mark/esp/esp-idf/export.sh
 
 ### Build custom version
-make USER_C_MODULES=../../../micropythonmodules CFLAGS_EXTRA="-DMODULE_QUICKLED_ENABLED=1" all
+make USER_C_MODULES=../../../micropythonmodules CFLAGS_EXTRA="-DMODULE_QUICKLED_ENABLED=1" all -j24
 
 ### Flash version
 SET PATH=C:\Users\Mark\AppData\Local\Programs\Python\Python39;C:\Users\Mark\AppData\Local\Programs\Python\Python39\Scripts;%PATH%
 esptool.py.exe --before no_reset erase_flash
-esptool.py.exe --chip esp32 --port COM3 -b 460800 write_flash -z 0x1000 firmware.bin
+esptool.py.exe --chip esp32 --port COM3 -b 921600 write_flash -z 0x1000 firmware.bin
