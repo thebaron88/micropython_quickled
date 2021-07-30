@@ -1,2 +1,1 @@
 docker run -it --name micropython --rm --mount type=bind,source=%~dp0\quickled,target=/usercmodule/quickled micropython /bin/bash
-rem make BOARD=GENERIC_OTA USER_C_MODULES=/usercmodule/quickled/micropython.cmake CFLAGS_EXTRA="-DMODULE_QUICKLED_ENABLED=1"          
