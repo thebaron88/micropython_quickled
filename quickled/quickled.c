@@ -285,4 +285,4 @@ const mp_obj_module_t quickled_cmodule = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t *)&quickled_module_globals,
 };
-MP_REGISTER_MODULE(MP_QSTR_quickled, quickled_cmodule, MODULE_QUICKLED_ENABLED);
+MP_REGISTER_MODULE(MP_QSTR_quickled, quickled_cmodule, 1);
