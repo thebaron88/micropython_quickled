@@ -24,4 +24,4 @@ ENV PATH="${IDF_PATH}/tools:${IDF_TOOLS_PATH}/xtensa-esp32-elf/esp-2020r3-8.4.0/
 
 WORKDIR /app/micropython/ports/esp32
 RUN make submodules
-#RUN make BOARD=GENERIC_OTA USER_C_MODULES=/usercmodule/quickled/micropython.cmake CFLAGS_EXTRA="-DMODULE_QUICKLED_ENABLED=1"  
+#RUN make BOARD=GENERIC_OTA USER_C_MODULES=/usercmodule/quickled/micropython.cmake
