@@ -53,3 +53,17 @@ make USER_C_MODULES=../../../micropythonmodules CFLAGS_EXTRA="-DMODULE_QUICKLED_
 SET PATH=C:\Users\Mark\AppData\Local\Programs\Python\Python39;C:\Users\Mark\AppData\Local\Programs\Python\Python39\Scripts;%PATH%
 esptool.py.exe --before no_reset erase_flash
 esptool.py.exe --chip esp32 --port COM3 -b 921600 write_flash -z 0x1000 firmware.bin
+
+## Code
+docker run -it --name code-server -p 8080:8080   -v "$HOME/.config:/home/coder/.config"   -v "project:/home/coder/project"   -u "$(id -u):$(id -g)" -v /var
+/run/docker.sock:/var/run/docker.sock  -e "DOCKER_USER=$USER"   codercom/code-server:latest
+
+then in the terminal
+
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh ./get-docker.sh
+
+chown the folder
+
+ocker run -it --name micropython --rm --mount type=bind,source=${PWD}/quickled,target=/usercmodule/quickled micropython /bin/bash
+ocker run -it --name micropython --rm -v "project:/usercmodule/quickled" micropython /bin/bash
