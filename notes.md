@@ -66,3 +66,5 @@ sh ./get-docker.sh
 chown the /home/coder/project folder and do a git clone into it
 
 docker run -it --name micropython --rm -v "project:/usercmodule/quickled" micropython /bin/bash
+
+make BOARD=GENERIC_OTA USER_C_MODULES=/usercmodule/quickled/quickled/quickled/micropython.cmake
