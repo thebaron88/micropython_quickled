@@ -63,7 +63,6 @@ then in the terminal
 curl -fsSL https://get.docker.com -o get-docker.sh
 sh ./get-docker.sh
 
-chown the folder
+chown the /home/coder/project folder and do a git clone into it
 
-ocker run -it --name micropython --rm --mount type=bind,source=${PWD}/quickled,target=/usercmodule/quickled micropython /bin/bash
-ocker run -it --name micropython --rm -v "project:/usercmodule/quickled" micropython /bin/bash
+docker run -it --name micropython --rm -v "project:/usercmodule/quickled" micropython /bin/bash
