@@ -15,4 +15,4 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v2
       - name: esp-idf build
-        uses: thebaron88/micropython_quickled
+        uses: thebaron88/micropython_quickled@75890987574c5aa11b7b539305426627f327ef3a
