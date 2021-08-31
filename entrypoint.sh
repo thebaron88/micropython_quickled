@@ -1,7 +1,6 @@
-#!/bin/sh
+#!/usr/bin/env bash
+set -e
 
-# `$*` expands the `args` supplied in an `array` individually
-# or splits `args` in a string separated by whitespace.
-sh -c "echo $*"
-make BOARD=GENERIC_OTA USER_C_MODULES=/usercmodule/quickled/quickled/quickled/micropython.cmake
+. $IDF_PATH/export.sh
 
+idf.py build
