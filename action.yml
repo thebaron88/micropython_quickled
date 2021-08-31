@@ -1,0 +1,8 @@
+name: "espressif idf build"
+description: "This action build your firmware directly in github using Espressif idf SDK."
+branding:
+  color: blue
+  icon: check
+runs:
+  using: "docker"
+  image: "Dockerfile"
