@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  #push:
+  #  branches: [ main ]
+  #pull_request:
+  #  branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      - name: build micropython with extension
+        uses: ./.github/actions/mpybuild
+        with:
+            board: GENERIC_OTA_LED
+            block_count: 120
+            user_cmodues: /github/workspace/quickled/micropython.cmake
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v2.2.4
+        with:
+          name: firmware
+          path: ./*.bin.gz
+      - name: Upload latest binary
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          title: "Development Build"
+          files: |
+            *.bin.gz

@@ -1,0 +1,21 @@
+name: "micropython build"
+description: "This action builds micropython with the user extension provided."
+branding:
+  color: blue
+  icon: check
+inputs:
+  board:
+    description: 'Which board to build'
+    required: false
+    default: 'GENERIC_OTA'
+  block_count:
+    description: 'How many blocks are in the user FS'
+  user_cmodues:
+    description: 'Additional user cmodules to build in'
+runs:
+  using: "docker"
+  image: "../../../build/Dockerfile"
+  args:
+    - ${{ inputs.board }}
+    - ${{ inputs.block_count }}
+    - ${{ inputs.user_cmodues }}
