@@ -12,7 +12,7 @@ if machine.unique_id() == b'Nope':
 else:
     MAX_LEDS = 5 * 50
     USED_LEDS = 5 * 50  # 60
-    MAX_BRIGHT = 255  # 104W at 255, 31W at 32
+    MAX_BRIGHT = 32  # 104W at 255, 31W at 32
     FADE_LIMIT = 0
 
 def timeit(method):
@@ -87,6 +87,7 @@ def do_christmas_rand_good(pixel_pin):
     shuffle(col_list)
     shuffle(sat_list)
     todo = USED_LEDS
+    iii = 0
     while True:
         if todo > 0:
             todo -= 1
@@ -106,6 +107,8 @@ def do_christmas_rand_good(pixel_pin):
                     shuffle(pix_list)
                     shuffle(col_list)
                     shuffle(sat_list)
+        print(iii)
+        iii += 1
 
 
 FADE = False
@@ -169,7 +172,5 @@ def main():
     do_christmas_rand_good(pixel_pin)
 
 machine.freq(240000000)
-print("I am", machine.unique_id())
-#do_disconnect()
-#print(ota_bytes)
+print("I am good machine", machine.unique_id())
 main()
