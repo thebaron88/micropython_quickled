@@ -1,4 +1,4 @@
-FROM espressif/idf:release-v4.2
+FROM espressif/idf:v4.0.2
 
 WORKDIR /app
 RUN git clone -b v1.16 https://github.com/micropython/micropython.git
