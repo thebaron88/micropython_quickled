@@ -1,7 +1,7 @@
 FROM espressif/idf:v4.0.2
 
 WORKDIR /app
-RUN git clone -b v1.16 https://github.com/micropython/micropython.git
+RUN git clone https://github.com/micropython/micropython.git
 
 WORKDIR /app/micropython
 RUN make -C mpy-cross
