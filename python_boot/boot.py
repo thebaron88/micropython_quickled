@@ -62,20 +62,25 @@ def check_sync(name, partition):
 if __name__ == "__main__":
     pin = Pin(2, Pin.OUT)
     pin.on()
-    partition = Partition.find(type=Partition.TYPE_DATA, label="vfs_1")[0]
-    if False:
-        print('Connecting to network...')
-        try:
-            wlan = do_connect()
-            print('Connected, network config:', wlan.ifconfig())
-            print('Syncing partition')
+    partitions = Partition.find(type=Partition.TYPE_DATA, label="vfs_1")
+    if len(partitions) == 0:
+        print("Can't find the partition, did you flash the LED version of the FW?")
+    else:
+        partition = partitions[0]
+        if True:
+            print('Connecting to network...')
             try:
-                check_sync("DYNAMIC", partition)
+                wlan = do_connect()
+                print('Connected, network config:', wlan.ifconfig())
+                print('Syncing partition')
+                try:
+                    check_sync("DYNAMIC", partition)
+                except:
+                    print("Fail to check sync, skipping.")
+                do_disconnect()
             except:
-                print("Fail to check sync, skipping.")
-        except:
-            print("Failed to connect to the network, skipping.")
-    pin.off()
-    print('Mounting')
-    os.mount(partition, '/')
-    print('All complete')
+                print("Failed to connect to the network, skipping.")
+        pin.off()
+        print('Mounting')
+        os.mount(partition, '/')
+        print('All complete')
