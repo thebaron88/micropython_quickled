@@ -88,6 +88,9 @@ def do_christmas_rand_good(pixel_pin):
     shuffle(col_list)
     shuffle(sat_list)
     todo = USED_LEDS
+    count = 0
+    last_time = time.time_ns()
+    average = 0
     while True:
         if todo > 0:
             todo -= 1
@@ -107,7 +110,17 @@ def do_christmas_rand_good(pixel_pin):
                     shuffle(pix_list)
                     shuffle(col_list)
                     shuffle(sat_list)
-
+        count += 1
+        if count % 100 == 0:
+            ms_per_string = (time.time_ns() - last_time) / 1000 / 1000 / 100 / 5
+            average = ((average * 9) + ms_per_string) / 10
+            print(count // 100, average, ms_per_string)  # ns to ms, then per round, then per string
+            # for 30 hz, its 33.3ms per cycle, so max of 11.5 string, so say 11 strings.
+            # 344.8 strings per second
+            # 17,241 pix per sec
+            # 33,333 RGB/s is the max the protocol allows
+            last_time = time.time_ns()
+        # time.sleep(0.)
 
 FADE = False
 SPEED = 8  # * 8

@@ -162,7 +162,7 @@ STATIC mp_obj_t quickled_write(mp_obj_t pin, mp_obj_t buf) {
 
     for (int item_index = 0; item_index < num_items; item_index++) {
         if (pix & mask) {
-            items[item_index].duration0 = 1000/50;
+            items[item_index].duration0 = 1000/50;  // 80Mhz / 4 == 50ns per tick. So ns / 50 gets the tick
             items[item_index].level0 = 1;
             items[item_index].duration1 = 250/50;
             items[item_index].level1 = 0;
@@ -203,26 +203,33 @@ STATIC mp_obj_t quickled_write_hsv(size_t n_args, const mp_obj_t *args) {
         return mp_const_none;
     }
 
-    rmt_config_t config = {0};
-    config.rmt_mode = RMT_MODE_TX;
-    config.channel = (rmt_channel_t)0;
-    config.gpio_num = mp_hal_get_pin_obj(args[0]);
-    config.mem_block_num = 8;
-    config.tx_config.loop_en = 0;
-
-    config.tx_config.carrier_en = 0;
-    config.tx_config.idle_output_en = 1;
-    config.tx_config.idle_level = 0;
-    config.tx_config.carrier_duty_percent = 50;
-    config.tx_config.carrier_freq_hz = 0;
-    config.tx_config.carrier_level = 1;
-
-    config.clk_div = 4;
-
-    check_esp_err(rmt_config(&config));
-    check_esp_err(rmt_driver_install(config.channel, 0, 0));
-
     int num_items = buf_hue_info.len * 8 * 3;  // One for each bit, and one for each color
+    rmt_channel_t rmt_chan = 0;
+
+    static rmt_item32_t *items = NULL;
+    if(!items) {
+        rmt_config_t config = {0};
+        config.rmt_mode = RMT_MODE_TX;
+        config.channel = rmt_chan;
+        config.gpio_num = mp_hal_get_pin_obj(args[0]);
+        config.mem_block_num = 8;
+        config.tx_config.loop_en = 0;
+
+        config.tx_config.carrier_en = 0;
+        config.tx_config.idle_output_en = 1;
+        config.tx_config.idle_level = 0;
+        config.tx_config.carrier_duty_percent = 50;
+        config.tx_config.carrier_freq_hz = 0;
+        config.tx_config.carrier_level = 1;
+
+        config.clk_div = 4;
+
+        check_esp_err(rmt_config(&config));
+        check_esp_err(rmt_driver_install(config.channel, 0, 0));
+
+        items = (rmt_item32_t *)malloc(num_items * sizeof(rmt_item32_t *));
+    } 
+
     uint8_t *buf_hue_ptr = (uint8_t *)buf_hue_info.buf;
     uint8_t *buf_sat_ptr = (uint8_t *)buf_sat_info.buf;
     uint8_t *buf_val_ptr = (uint8_t *)buf_val_info.buf;
@@ -236,8 +243,6 @@ STATIC mp_obj_t quickled_write_hsv(size_t n_args, const mp_obj_t *args) {
 
     hsv2rgb_rainbow_mark(&in_hue, &out_color);
     uint8_t val = *((uint8_t *)&out_color);
-
-    rmt_item32_t *items = malloc(num_items * sizeof(rmt_item32_t *));
 
     int color = 0;
     for (int item_index = 0; item_index < num_items; item_index++) {
@@ -265,10 +270,10 @@ STATIC mp_obj_t quickled_write_hsv(size_t n_args, const mp_obj_t *args) {
         }
     }
 
-    check_esp_err(rmt_write_items(config.channel, items, num_items, true /* blocking */));
+    check_esp_err(rmt_write_items(rmt_chan, items, num_items, false /* blocking */));
 
-    rmt_driver_uninstall(config.channel);
-    free(items);
+    // rmt_driver_uninstall(rmt_chan);
+    // free(items);
 
     return mp_const_none;
 }
