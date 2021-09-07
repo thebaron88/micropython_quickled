@@ -3,6 +3,7 @@ import prequests
 import os
 import zlib
 import time
+import sys
 from machine import Pin
 from esp32 import Partition
 from creds import BASEURL, USERNAME, PASSWORD
@@ -55,32 +56,57 @@ def check_sync(name, partition):
         print("Updating to version", latest_version)
         sync_blocks(url, partition)
         open(file_name, "w").write(latest_version)
+        return True
     else:
         print("Already at version", latest_version)
+        return False
 
+def connect_to_network():
+    print('Connecting to network...')
+    try:
+        wlan = do_connect()
+        print('Connected, network config:', wlan.ifconfig())
+        return True
+    except:
+        pass
+    print("Failed to connect to the network.")
+    return False
+
+
+def find_partition(label):
+    python_boot_partitons = Partition.find(type=Partition.TYPE_DATA, label="vfs")
+    if len(python_boot_partitons) == 1:
+        print("Partition", label, "found")
+        return python_boot_partitons[0]
+    print("Could not find partition", label)
+    sys.exit()
 
 if __name__ == "__main__":
     pin = Pin(2, Pin.OUT)
     pin.on()
-    partitions = Partition.find(type=Partition.TYPE_DATA, label="vfs_1")
-    if len(partitions) == 0:
-        print("Can't find the partition, did you flash the LED version of the FW?")
-    else:
-        partition = partitions[0]
-        if True:
-            print('Connecting to network...')
-            try:
-                wlan = do_connect()
-                print('Connected, network config:', wlan.ifconfig())
-                print('Syncing partition')
-                try:
-                    check_sync("DYNAMIC", partition)
-                except:
-                    print("Fail to check sync, skipping.")
-                do_disconnect()
-            except:
-                print("Failed to connect to the network, skipping.")
-        pin.off()
-        print('Mounting')
-        os.mount(partition, '/')
-        print('All complete')
+
+    connected = connect_to_network()
+    python_boot_partiton = find_partition("vfs")
+    python_app_partiton = find_partition("vfs_1")
+
+    if connected:
+        current_mpy_partition = Partition(Partition.RUNNING)
+        current_mpy_partition.mark_app_valid_cancel_rollback()  # A MPy update is only successful if the WIFI works
+
+        print('Syncing python boot partition')  # Very rare and dangerous.
+        if check_sync("python_boot", python_boot_partiton):
+            machine.soft_reset()  # It is only this partition that changed, not the FW
+
+        print('Syncing python app partition')  # Pretty common
+        if check_sync("python", python_app_partiton):
+            pass  # We mount afterwards, so its not currently in use anyway
+
+        if check_sync("app", ota_partition):
+            ota_partition.set_boot()
+            machine.reset()  # This was a full fat FW update, reboot.
+
+        do_disconnect()
+    
+    print('Mounting')
+    os.mount(python_app_partiton, '/')
+    pin.off()
