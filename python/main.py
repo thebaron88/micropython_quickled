@@ -11,8 +11,8 @@ if machine.unique_id() == b'$\n\xc41\xe5x':
     MAX_BRIGHT = 255
     FADE_LIMIT = 0
 else:
-    MAX_LEDS = 5 * 50
-    USED_LEDS = 2 * 50  # 60
+    MAX_LEDS = 8 * 50
+    USED_LEDS = MAX_LEDS # 5 * 50  # 60
     MAX_BRIGHT = 255  # 104W at 255, 31W at 32
     FADE_LIMIT = 0
 
@@ -83,7 +83,7 @@ def do_christmas_rand_good(pixel_pin):
     val = bytearray([0]*MAX_LEDS)
     pix_list = list(range(0, MAX_LEDS))
     col_list = list(range(256)) * ((USED_LEDS // 255) + 1)
-    sat_list = [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0] * ((USED_LEDS // 12) + 1)
+    sat_list = [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0] * ((USED_LEDS // 24) + 1)
     shuffle(pix_list)
     shuffle(col_list)
     shuffle(sat_list)
@@ -112,14 +112,18 @@ def do_christmas_rand_good(pixel_pin):
                     shuffle(sat_list)
         count += 1
         if count % 100 == 0:
-            ms_per_string = (time.time_ns() - last_time) / 1000 / 1000 / 100 / 5
+            ms_per_string = 1 / ((time.time_ns() - last_time) / 1000 / 1000 / 1000 / 100) # mico, milli, second, 100 rounds
             average = ((average * 9) + ms_per_string) / 10
             print(count // 100, average, ms_per_string)  # ns to ms, then per round, then per string
             # for 30 hz, its 33.3ms per cycle, so max of 11.5 string, so say 11 strings.
+            # 19.58 strings on non-blocking mode
             # 344.8 strings per second
             # 17,241 pix per sec
             # 33,333 RGB/s is the max the protocol allows
+            # 29,412 pix per sec nonblocking
             last_time = time.time_ns()
+            #while True:
+            #    print("Stopped")
         # time.sleep(0.)
 
 FADE = False
