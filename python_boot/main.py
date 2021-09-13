@@ -1,1 +1,1 @@
-print("Boot Failed")
+print("Error, this is boots main.")
