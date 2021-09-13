@@ -4,6 +4,7 @@ import os
 import zlib
 import time
 import sys
+import machine
 from machine import Pin
 from esp32 import Partition
 from creds import BASEURL, USERNAME, PASSWORD
@@ -28,12 +29,22 @@ def do_disconnect():
 
 
 gzdict_sz = 16 + 15
-def sync_blocks(url, partition):
-    request = prequests.get(url)
-    file_stream = zlib.DecompIO(request.raw, gzdict_sz)
-    block_num = 0
+def sync_blocks(name, partition):
+    url = BASEURL + name + ".bin"
     block_data = bytearray(4096)
     dl_buffer = bytearray(4096)
+    
+    request = prequests.get(url, headers={"Range": "bytes=0-4096"})
+    data_downloaded = request.raw.readinto(dl_buffer)
+    partition.readblocks(0, block_data)
+    if block_data == dl_buffer:
+        print("First 4k are the same, aborting sync")
+        return False
+
+    url = BASEURL + name + ".bin"#.gz"
+    request = prequests.get(url)
+    file_stream = request.raw # zlib.DecompIO(request.raw, gzdict_sz)
+    block_num = 0
     data_downloaded = file_stream.readinto(dl_buffer)
     while data_downloaded != 0:
         print(block_num)
@@ -45,21 +56,8 @@ def sync_blocks(url, partition):
         data_downloaded = file_stream.readinto(dl_buffer)
     request.close()
     print("Done DL of", 4096*block_num + data_downloaded)
+    return True
 
-
-def check_sync(name, partition):
-    url = BASEURL + name + ".bin.gz"
-    request = prequests.head(url, parse_headers=True)
-    latest_version = request.headers['ETag']
-    file_name = "current_version_"+name+".txt"
-    if file_name not in os.listdir("/") or open(file_name, "r").read() != latest_version:
-        print("Updating to version", latest_version)
-        sync_blocks(url, partition)
-        open(file_name, "w").write(latest_version)
-        return True
-    else:
-        print("Already at version", latest_version)
-        return False
 
 def connect_to_network():
     print('Connecting to network...')
@@ -74,7 +72,7 @@ def connect_to_network():
 
 
 def find_partition(label):
-    python_boot_partitons = Partition.find(type=Partition.TYPE_DATA, label="vfs")
+    python_boot_partitons = Partition.find(type=Partition.TYPE_DATA, label=label)
     if len(python_boot_partitons) == 1:
         print("Partition", label, "found")
         return python_boot_partitons[0]
@@ -91,21 +89,24 @@ if __name__ == "__main__":
 
     if connected:
         current_mpy_partition = Partition(Partition.RUNNING)
+        print("I am", current_mpy_partition)
         current_mpy_partition.mark_app_valid_cancel_rollback()  # A MPy update is only successful if the WIFI works
+        ota_partition = current_mpy_partition.get_next_update()
 
         print('Syncing python boot partition')  # Very rare and dangerous.
-        if check_sync("python_boot", python_boot_partiton):
-            machine.soft_reset()  # It is only this partition that changed, not the FW
+        if sync_blocks("python_boot", python_boot_partiton):
+            machine.reset()  # It is only this partition that changed, not the FW
 
         print('Syncing python app partition')  # Pretty common
-        if check_sync("python", python_app_partiton):
+        if sync_blocks("python", python_app_partiton):
             pass  # We mount afterwards, so its not currently in use anyway
 
-        if check_sync("app", ota_partition):
+        print('Syncing mpy partition')  # Pretty common
+        if sync_blocks("micropython", ota_partition):
             ota_partition.set_boot()
             machine.reset()  # This was a full fat FW update, reboot.
 
-        do_disconnect()
+    do_disconnect()
     
     print('Mounting')
     os.mount(python_app_partiton, '/')
