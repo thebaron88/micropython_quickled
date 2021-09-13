@@ -31,7 +31,7 @@ cp /app/micropython/ports/esp32/build-$1/micropython.bin /github/workspace/micro
 cp /app/micropython/ports/esp32/build-$1/micropython.bin.gz /github/workspace/micropython.bin.gz
 
 pip install littlefs-python
-python /github/workspace/build/makefs.py --dir /github/workspace/python_boot --out /github/workspace/fs.bin --block_count $2
-gzip -9 -k -f /github/workspace/fs.bin
-python /github/workspace/build/makefs.py --dir /github/workspace/python --out /github/workspace/fs2.bin --block_count $2
-gzip -9 -k -f /github/workspace/fs2.bin
+python /github/workspace/build/makefs.py --dir /github/workspace/python_boot --out /github/workspace/python_boot.bin --block_count $2
+gzip -9 -k -f /github/workspace/python_boot.bin
+python /github/workspace/build/makefs.py --dir /github/workspace/python --out /github/workspace/python.bin --block_count $2
+gzip -9 -k -f /github/workspace/python.bin
