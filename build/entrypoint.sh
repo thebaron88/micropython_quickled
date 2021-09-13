@@ -7,6 +7,10 @@ if [ ! -d "/app/micropython/ports/esp32/boards/$1" ]; then
   cp -r /github/workspace/boards/$1 /app/micropython/ports/esp32/boards/$1
 fi
 
+echo "$4" >> /app/micropython/ports/esp32/version.txt
+
+sed -i '/CONFIG_APP_EXCLUDE_PROJECT_VER_VAR/d' /app/micropython/ports/esp32/boards/sdkconfig.base
+
 cd /app/micropython/ports/esp32
 make BOARD=$1 USER_C_MODULES=$3
 
