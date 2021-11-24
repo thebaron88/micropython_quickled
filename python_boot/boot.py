@@ -34,7 +34,11 @@ def sync_blocks(name, partition):
     block_data = bytearray(4096)
     dl_buffer = bytearray(4096)
     
-    request = prequests.get(url, headers={"Range": "bytes=0-4096"})
+    try:
+        request = prequests.get(url, headers={"Range": "bytes=0-4096"})
+    except:
+        print("Fetch failed, aborting sync")
+        return False
     data_downloaded = request.raw.readinto(dl_buffer)
     partition.readblocks(0, block_data)
     if block_data == dl_buffer:

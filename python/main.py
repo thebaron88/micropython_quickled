@@ -5,14 +5,14 @@ import machine
 import time
 from machine import Pin
 
-if machine.unique_id() == b'$\n\xc41\xe5x':
-    MAX_LEDS = 5 * 50  # 60
-    USED_LEDS = 5 * 50  # 60
-    MAX_BRIGHT = 255
+if True: # machine.unique_id() == b'$\n\xc41\xda\xf8':
+    MAX_LEDS = 6 * 50  # 60
+    USED_LEDS = 6 * 50  # 60
+    MAX_BRIGHT = 255 // 2
     FADE_LIMIT = 0
 else:
-    MAX_LEDS = 5 * 50
-    USED_LEDS = 2 * 50  # 60
+    MAX_LEDS = 1 * 50
+    USED_LEDS = 1 * 50  # 60
     MAX_BRIGHT = 255  # 104W at 255, 31W at 32
     FADE_LIMIT = 0
 
@@ -128,7 +128,7 @@ def do_christmas_rand_fade(pixel_pin):
                         val[i] = value
                         quickled.write_hsv(pixel_pin, hue, sat, val)
             else:
-                val[i] = MAXBRIGHT
+                val[i] = MAX_BRIGHT
             hue[i] = col_list[i]
             if FADE:
                 for value in fade:
@@ -136,24 +136,51 @@ def do_christmas_rand_fade(pixel_pin):
                     quickled.write_hsv(pixel_pin, hue, sat, val)
             quickled.write_hsv(pixel_pin, hue, sat, val)
 
-
+STEP = 32
 def do_christmas_skip(pixel_pin):
     hue = bytearray([0]*MAX_LEDS)
     sat = bytearray([255]*MAX_LEDS)
-    val = bytearray([MAX_BRIGHT]*MAX_LEDS)
+    val = bytearray([0]*MAX_LEDS)
+    color = 0
+    skip = 2
     while True:
-        skip = random.randint(2, 5)
-        color = random.randint(0, 255)
+        skip = ((skip - 2 + random.randint(1, 3)) % 4 + 2)
+        hit = random.randint(0, skip-1)
+        color = (color + random.randint(30, 255-30)) % 256
         for i in range(0, MAX_LEDS):
-            if i % skip == 0:
+            if i % skip == hit:
+                while val[i] > 0 + STEP:
+                    quickled.write_hsv(pixel_pin, hue, sat, val)
+                    val[i] -= STEP
+                val[i] = 0
+
                 hue[i] = color
-            quickled.write_hsv(pixel_pin, hue, sat, val)
-        skip = random.randint(2, 5)
-        color = random.randint(0, 255)
+
+                while val[i] < MAX_BRIGHT - STEP:
+                    quickled.write_hsv(pixel_pin, hue, sat, val)
+                    val[i] += STEP
+                val[i] = MAX_BRIGHT
+
+                quickled.write_hsv(pixel_pin, hue, sat, val)
+
+        skip = ((skip - 2 + random.randint(1, 3)) % 4 + 2)
+        hit = random.randint(0, skip-1)
+        color = (color + random.randint(30, 255-30)) % 256
         for i in range(MAX_LEDS-1, -1, -1):
-            if i % skip == 0:
+            if i % skip == hit:
+                while val[i] > 0 + STEP:
+                    quickled.write_hsv(pixel_pin, hue, sat, val)
+                    val[i] -= STEP
+                val[i] = 0
+
                 hue[i] = color
-            quickled.write_hsv(pixel_pin, hue, sat, val)
+
+                while val[i] < MAX_BRIGHT - STEP:
+                    quickled.write_hsv(pixel_pin, hue, sat, val)
+                    val[i] += STEP
+                val[i] = MAX_BRIGHT
+                
+                quickled.write_hsv(pixel_pin, hue, sat, val)
 
 
 def do_christmas_hue(pixel_pin):
@@ -167,7 +194,8 @@ def do_christmas_hue(pixel_pin):
 
 def main():
     pixel_pin = machine.Pin(13, Pin.OUT)
-    do_christmas_rand_good(pixel_pin)
+    #do_christmas_rand_good(pixel_pin)
+    do_christmas_skip(pixel_pin)
 
 machine.freq(240000000)
 print("I am", machine.unique_id())
