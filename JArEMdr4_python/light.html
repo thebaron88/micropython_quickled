@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <title>Test</title>
+        <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+        <script>
+            var client;
+            var ratelimit = undefined;
+            var device = undefined;
+            var payload = undefined;
+            function doIt() {
+                const host = 'wss://home.fairbairn.xyz/mqtt/'
+                const options = {
+                    timeout: 10
+                }
+                client = mqtt.connect(host, options)
+                client.on('error', (err) => {
+                    console.log('Connection error: ', err)
+                    client.end()
+                })
+                client.on('reconnect', () => {
+                    console.log('Reconnecting...')
+                })
+                client.on('disconnect', () => {
+                    console.log('It disconnected us...')
+                })
+                client.on('connect', (connack) => {
+                    console.log('Client connected:')
+                })
+                client.on('message', (topic, message, packet) => {
+                    console.log('Received Message On topic: ' + topic)
+                })
+            }
+            function colorChange(e) {
+                console.log(e.value)
+                const topic = 'color/set'
+                client.publish(topic, e.value, {retain: true})
+            }
+        </script>
+    </head>
+    <body onload="doIt();">
+        <div>
+            <input type="color" id="tree" name="tree" onchange="colorChange(this)">
+            <label for="tree">Tree</label>
+        </div>
+    </body>
+</html>
