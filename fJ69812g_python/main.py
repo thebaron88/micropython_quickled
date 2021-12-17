@@ -8,8 +8,8 @@ from machine import Pin
 def res():
     machine.reset()
 
-MAX_LEDS = 5 * 50  # 60
-USED_LEDS = (5 * 50)  // 2
+MAX_LEDS = 4 * 50  # 60
+USED_LEDS = (4 * 50)
 MAX_BRIGHT = 255
 FADE_LIMIT = 0
 
@@ -109,6 +109,28 @@ def do_christmas_rand_good(pixel_pin):
                     shuffle(sat_list)
 
 
+MAX_VAL = 255
+FADER_SPEED = 4
+def do_christmas_rand_on_swap(pixel_pin):
+    timer = bytearray([0]*MAX_LEDS)
+    val = bytearray([0]*MAX_LEDS)
+    sat = bytearray([255]*MAX_LEDS)
+    hue = bytearray([255]*MAX_LEDS)
+    while True:
+        quickled.write_hsv(pixel_pin, hue, sat, val)
+        for i in range(len(val)):
+            if timer[i] > 0:
+                if val[i] < MAX_VAL:
+                    val[i] = min(val[i] + FADER_SPEED, MAX_VAL)
+                else:
+                    timer[i] -= 1
+            elif timer[i] == 0:
+                if val[i] == 0:
+                    hue[i] = (hue[i] + random.randrange(0+30,256-30)) % 256
+                    timer[i] = random.randrange(10,120)
+                else:
+                    val[i] = max(val[i] - FADER_SPEED, 0)
+
 FADE = False
 SPEED = 8  # * 8
 def do_christmas_rand_fade(pixel_pin):
@@ -205,7 +227,7 @@ def power_test(pixel_pin):
 def main():
     pixel_pin = machine.Pin(13, Pin.OUT)
     #power_test(pixel_pin)
-    do_christmas_rand_good(pixel_pin)
+    do_christmas_rand_on_swap(pixel_pin)
     #if machine.unique_id() == b'1|\x9e\xbd\xf3]\xa0':
     # 	do_christmas_skip(pixel_pin)
     # else:
