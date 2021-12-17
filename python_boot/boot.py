@@ -5,12 +5,15 @@ import zlib
 import time
 import sys
 import machine
+import binascii
 from machine import Pin
 from esp32 import Partition
 from creds import BASEURL, USERNAME, PASSWORD
 
-def do_connect():
+def do_connect(hostname):
     wlan = network.WLAN(network.STA_IF)
+    if hostname is not None:
+        wlan.config(dhcp_hostname=hostname)
     wlan.active(True)
     if not wlan.isconnected():
         wlan.connect(USERNAME, PASSWORD)
@@ -63,10 +66,10 @@ def sync_blocks(name, partition):
     return True
 
 
-def connect_to_network():
+def connect_to_network(hostname=None):
     print('Connecting to network...')
     try:
-        wlan = do_connect()
+        wlan = do_connect(hostname)
         print('Connected, network config:', wlan.ifconfig())
         return True
     except:
@@ -92,21 +95,22 @@ if __name__ == "__main__":
     python_app_partiton = find_partition("vfs_1")
 
     if connected:
+        my_id = binascii.b2a_base64(machine.unique_id()).strip().decode()
         current_mpy_partition = Partition(Partition.RUNNING)
-        print("I am", current_mpy_partition)
+        print("I am", my_id)
         current_mpy_partition.mark_app_valid_cancel_rollback()  # A MPy update is only successful if the WIFI works
         ota_partition = current_mpy_partition.get_next_update()
 
         print('Syncing python boot partition')  # Very rare and dangerous.
-        if sync_blocks("python_boot", python_boot_partiton):
+        if sync_blocks(my_id+"_python_boot", python_boot_partiton):
             machine.reset()  # It is only this partition that changed, not the FW
 
         print('Syncing python app partition')  # Pretty common
-        if sync_blocks("python", python_app_partiton):
+        if sync_blocks(my_id+"_python", python_app_partiton):
             pass  # We mount afterwards, so its not currently in use anyway
 
         print('Syncing mpy partition')  # Pretty common
-        if sync_blocks("micropython", ota_partition):
+        if sync_blocks(my_id+"_micropython", ota_partition):
             ota_partition.set_boot()
             machine.reset()  # This was a full fat FW update, reboot.
 
